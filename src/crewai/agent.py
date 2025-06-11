@@ -216,18 +216,24 @@ class Agent(BaseAgent):
         if self.knowledge:
             agent_knowledge_snippets = self.knowledge.query([task.prompt()])
             if agent_knowledge_snippets:
-                agent_knowledge_context = extract_knowledge_context(
+                agent_knowledge_context, agent_rag_details = extract_knowledge_context(
                     agent_knowledge_snippets
                 )
                 if agent_knowledge_context:
                     task_prompt += agent_knowledge_context
+                    # Store simplified RAG details (only context + score)
+                    if self.verbose:
+                        self._agent_rag_results = agent_rag_details
 
         if self.crew:
             knowledge_snippets = self.crew.query_knowledge([task.prompt()])
             if knowledge_snippets:
-                crew_knowledge_context = extract_knowledge_context(knowledge_snippets)
+                crew_knowledge_context, crew_rag_details = extract_knowledge_context(knowledge_snippets)
                 if crew_knowledge_context:
                     task_prompt += crew_knowledge_context
+                    # Store simplified RAG details (only context + score)
+                    if self.verbose:
+                        self._crew_rag_results = crew_rag_details
 
         tools = tools or self.tools or []
         self.create_agent_executor(tools=tools, task=task)
@@ -520,3 +526,16 @@ class Agent(BaseAgent):
         )
 
         return await lite_agent.kickoff_async(messages)
+
+    def get_rag_results(self) -> Dict[str, str]:
+        """Get the stored RAG results from the last task execution.
+        
+        Returns:
+            Dict containing agent and crew RAG results if available
+        """
+        results = {}
+        if hasattr(self, '_agent_rag_results'):
+            results['agent_rag_results'] = self._agent_rag_results
+        if hasattr(self, '_crew_rag_results'):
+            results['crew_rag_results'] = self._crew_rag_results
+        return results
