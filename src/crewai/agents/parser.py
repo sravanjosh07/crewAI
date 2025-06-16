@@ -29,11 +29,13 @@ class AgentFinish:
     thought: str
     output: str
     text: str
+    feedback: Optional[str]
 
-    def __init__(self, thought: str, output: str, text: str):
+    def __init__(self, thought: str, output: str, text: str, feedback: Optional[str] = None):
         self.thought = thought
         self.output = output
         self.text = text
+        self.feedback = feedback
 
 
 class OutputParserException(Exception):

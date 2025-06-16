@@ -413,17 +413,20 @@ class CrewAgentExecutor(CrewAgentExecutorMixin):
         """Process feedback for regular use with potential multiple iterations."""
         feedback = initial_feedback
         answer = current_answer
+        feedbacks = []
 
         while self.ask_for_human_input:
             # If the user provides a blank response, assume they are happy with the result
             if feedback.strip() == "":
                 self.ask_for_human_input = False
             else:
+                feedbacks.append(feedback)
+                answer.feedback = feedback
                 answer = self._process_feedback_iteration(feedback)
                 feedback = self._ask_human_input(answer.output)
-
+        answer.feedback = "\n".join(feedbacks)
         return answer
-
+    
     def _process_feedback_iteration(self, feedback: str) -> AgentFinish:
         """Process a single feedback iteration."""
         self.messages.append(

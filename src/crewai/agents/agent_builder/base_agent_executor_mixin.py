@@ -36,13 +36,26 @@ class CrewAgentExecutorMixin:
                     hasattr(self.crew, "_short_term_memory")
                     and self.crew._short_term_memory
                 ):
-                    self.crew._short_term_memory.save(
-                        value=output.text,
-                        metadata={
-                            "observation": self.task.description,
-                        },
-                        agent=self.agent.role,
-                    )
+                    # Get user query from crew inputs if available
+                    user_query = getattr(self.crew, '_original_inputs', {}).get('user_query', 'Unknown query')
+                    
+                    # Get feedback if it exists, otherwise use empty string
+                    feedback_value = ""
+                    if hasattr(output, 'feedback') and output.feedback:
+                        feedback_value = str(output.feedback).strip()
+                    
+                    # Only save if there's actual feedback content
+                    if feedback_value:
+                        self.crew._short_term_memory.save(
+                            value=feedback_value,
+                            metadata={
+                                "observation": self.task.description,
+                                "user_query": user_query,
+                                "agent_output": getattr(output, 'text', ''),
+                                "timestamp": str(time.time()),
+                            },
+                            agent=self.agent.role,
+                        )
             except Exception as e:
                 print(f"Failed to add to short term memory: {e}")
                 pass
