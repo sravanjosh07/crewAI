@@ -128,35 +128,45 @@ class CrewAgentExecutorMixin:
                 print(f"Failed to add to long term memory: {e}")
                 pass
 
+    # ------- New Panel UI delegation -----------
     def _ask_human_input(self, final_answer: str) -> str:
-        """Prompt human input with mode-appropriate messaging."""
-        self._printer.print(
-            content=f"\033[1m\033[95m ## Final Result:\033[00m \033[92m{final_answer}\033[00m"
-        )
+        """Always use the handler injected via crew._ask_human_input (never input())."""
+        if self.crew and hasattr(self.crew, '_ask_human_input') and callable(self.crew._ask_human_input):
+            return self.crew._ask_human_input(final_answer)
+        return ""
 
-        # Training mode prompt (single iteration)
-        if self.crew and getattr(self.crew, "_train", False):
-            prompt = (
-                "\n\n=====\n"
-                "## TRAINING MODE: Provide feedback to improve the agent's performance.\n"
-                "This will be used to train better versions of the agent.\n"
-                "Please provide detailed feedback about the result quality and reasoning process.\n"
-                "=====\n"
-            )
-        # Regular human-in-the-loop prompt (multiple iterations)
-        else:
-            prompt = (
-                "\n\n=====\n"
-                "## HUMAN FEEDBACK: Provide feedback on the Final Result and Agent's actions.\n"
-                "Please follow these guidelines:\n"
-                " - If you are happy with the result, simply hit Enter without typing anything.\n"
-                " - Otherwise, provide specific improvement requests.\n"
-                " - You can provide multiple rounds of feedback until satisfied.\n"
-                "=====\n"
-            )
+    # Uncomment this method if you want to use the original human input prompt
+    # This is kept for reference and can be used if needed.
 
-        self._printer.print(content=prompt, color="bold_yellow")
-        response = input()
-        if response.strip() != "":
-            self._printer.print(content="\nProcessing your feedback...", color="cyan")
-        return response
+    # def _ask_human_input(self, final_answer: str) -> str:
+    #     """Prompt human input with mode-appropriate messaging."""
+    #     self._printer.print(
+    #         content=f"\033[1m\033[95m ## Final Result:\033[00m \033[92m{final_answer}\033[00m"
+    #     )
+
+    #     # Training mode prompt (single iteration)
+    #     if self.crew and getattr(self.crew, "_train", False):
+    #         prompt = (
+    #             "\n\n=====\n"
+    #             "## TRAINING MODE: Provide feedback to improve the agent's performance.\n"
+    #             "This will be used to train better versions of the agent.\n"
+    #             "Please provide detailed feedback about the result quality and reasoning process.\n"
+    #             "=====\n"
+    #         )
+    #     # Regular human-in-the-loop prompt (multiple iterations)
+    #     else:
+    #         prompt = (
+    #             "\n\n=====\n"
+    #             "## HUMAN FEEDBACK: Provide feedback on the Final Result and Agent's actions.\n"
+    #             "Please follow these guidelines:\n"
+    #             " - If you are happy with the result, simply hit Enter without typing anything.\n"
+    #             " - Otherwise, provide specific improvement requests.\n"
+    #             " - You can provide multiple rounds of feedback until satisfied.\n"
+    #             "=====\n"
+    #         )
+
+    #     self._printer.print(content=prompt, color="bold_yellow")
+    #     response = input()
+    #     if response.strip() != "":
+    #         self._printer.print(content="\nProcessing your feedback...", color="cyan")
+    #     return response
